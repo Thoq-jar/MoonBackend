@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon - Shopping List</title>
+    <link id="themeLink" href="/css/dark-theme.css" rel="stylesheet">
+    <link rel="icon" th:href="@{/images/favicon.png}" type="image/x-icon">
+</head>
+<body>
+<div class="container">
+    <h1>Moon</h1>
+    <h2>Shopping List</h2>
+    <button id="add-item-btn" class="rounded-btn">+</button>
+    <button id="help-item-btn" class="rounded-btn">?</button>
+    <button id="save-list-btn" class="rounded-btn">SL</button>
+    <button id="import-list-btn" class="rounded-btn">Import List</button>
+    <input type="file" id="load-list-input" accept=".msf" style="display: none;">
+    <button id="color-item-btn" class="rounded-btn">C</button>
+    <div id="item-list">
+    </div>
+</div>
+<div id="add-item-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <form id="add-item-form">
+            <label for="item-name">Item Name:</label>
+            <input type="text" id="item-name" name="item-name" required>
+            <label for="item-amount">Amount:</label>
+            <input type="number" id="item-amount" name="item-amount" required>
+            <button type="submit">Add to Cart</button>
+        </form>
+    </div>
+</div>
+<div id="help-item-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Help</h2>
+        <p>Just click the '+' icon and continue!</p>
+        <p>Hint: You can change colors by pressing the 'C' button!</p>
+        <p>Hint: To save list as file click the `LS` button!</p>
+        <p>Hint: To load list as file click the `Import list` button!</p>
+        <p>Hint: Loading a list will clear the current one! Remember to save frequently!</p>
+    </div>
+</div>
+<script type="text/javascript" th:src="@{/js/script.js}"></script>
+<script type="text/javascript" th:src="@{/js/mos.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('color-item-btn').addEventListener('click', toggleTheme);
+        const themeLink = document.getElementById('themeLink');
+
+        function toggleTheme() {
+            var themeLink = document.getElementById('themeLink');
+            var theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                themeLink.setAttribute('href', '/css/dark-theme.css');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeLink.setAttribute('href', '/css/light-theme.css');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                themeLink.setAttribute('href', '/css/dark-theme.css');
+            } else if (savedTheme === 'light') {
+                themeLink.setAttribute('href', '/css/light-theme.css');
+            }
+        }
+
+        applySavedTheme();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+document.addEventListener('DOMContentLoaded', function () {
+    const itemList = document.getElementById('item-list');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const addItemModal = document.getElementById('add-item-modal');
+    const closeBtn = document.querySelector('.close-btn');
+    const addItemForm = document.getElementById('add-item-form');
+    const helpItemBtn = document.getElementById('help-item-btn');
+    const helpItemModal = document.getElementById('help-item-modal');
+    const colorItemBtn = document.getElementById('color-item-btn');
+    const themeLink = document.getElementById('theme-link');
+
+    /* Move to HTML5 temp
+    document.getElementById('color-item-btn').addEventListener('click', toggleTheme);
+    function toggleTheme() {
+        var themeLink = document.getElementById('themeLink');
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light') {
+            themeLink.setAttribute('href', '@{/css/dark-theme.css}');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            themeLink.setAttribute('href', '@{/css/light-theme.css}');
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                themeLink.setAttribute('href', 'dark-theme.css');
+            } else if (savedTheme === 'light') {
+                themeLink.setAttribute('href', 'light-theme.css');
+            }
+        }
+
+    applySavedTheme();
+*/
+
+    loadItems(itemList);
+
+    addItemBtn.addEventListener('click', function () {
+        addItemModal.style.display = 'block';
+    });
+
+    closeBtn.addEventListener('click', function () {
+        addItemModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', function (event) {
+        if (event.target == addItemModal) {
+            addItemModal.style.display = 'none';
+        }
+    });
+
+    addItemForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const itemName = document.getElementById('item-name').value;
+        const itemPrice = document.getElementById('item-amount').value;
+
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('item');
+        itemDiv.innerHTML = `
+            <span class="item-name">${itemName}</span>
+            <span class="item-price">(x${itemPrice})</span>
+            <button class="remove-btn">Remove</button>
+        `;
+
+        itemList.appendChild(itemDiv);
+
+        const removeBtn = itemDiv.querySelector('.remove-btn');
+        removeBtn.addEventListener('click', function () {
+            itemDiv.remove();
+            removeItemFromLocalStorage(itemName);
+        });
+
+        saveItemToLocalStorage(itemName, itemPrice);
+
+        addItemForm.reset();
+        addItemModal.style.display = 'none';
+    });
+
+    helpItemBtn.addEventListener('click', function () {
+        helpItemModal.style.display = 'block';
+    });
+
+    const helpItemCloseBtn = helpItemModal.querySelector('.close-btn');
+    helpItemCloseBtn.addEventListener('click', function () {
+        helpItemModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', function (event) {
+        if (event.target == helpItemModal) {
+            helpItemModal.style.display = 'none';
+        }
+    });
+});
+
+function saveItemToLocalStorage(itemName, itemPrice) {
+    const items = JSON.parse(localStorage.getItem('items')) || [];
+    items.push({ name: itemName, price: itemPrice });
+    localStorage.setItem('items', JSON.stringify(items));
+    localStorage.setItem('loggedIn', 'true');
+}
+
+function removeItemFromLocalStorage(itemName) {
+    const items = JSON.parse(localStorage.getItem('items')) || [];
+    const updatedItems = items.filter(item => item.name !== itemName);
+    localStorage.setItem('items', JSON.stringify(updatedItems));
+}
+
+function loadItems(itemList) {
+    const items = JSON.parse(localStorage.getItem('items')) || [];
+    items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('item');
+        itemDiv.innerHTML = `
+            <span class="item-name">${item.name}</span>
+            <span class="item-amount">(x${item.price})</span>
+            <button class="remove-btn">Remove</button>
+        `;
+
+        itemList.appendChild(itemDiv);
+
+        const removeBtn = itemDiv.querySelector('.remove-btn');
+        removeBtn.addEventListener('click', function () {
+            itemDiv.remove();
+            removeItemFromLocalStorage(item.name);
+        });
+    });
+}
+
+document.getElementById('save-list-btn').addEventListener('click', saveListToFile);
+
+function generateFileContent() {
+    const items = JSON.parse(localStorage.getItem('items')) || [];
+    let fileContent = "!GENERATED BY MOON\n!DO NOT EDIT\n!®Thoq Industries 2024\n";
+
+    items.forEach(item => {
+        fileContent += `{ITEM=(${item.name}) | COUNT=(${item.price})};\n`;
+    });
+
+    return fileContent;
+}
+
+function saveListToFile() {
+    const fileContent = generateFileContent();
+    const blob = new Blob([fileContent], {type: "msf/msf;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'list.msf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+document.getElementById('load-list-input').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const contents = e.target.result;
+        loadListFromFileContent(contents);
+    };
+    reader.readAsText(file);
+});
+
+document.getElementById('import-list-btn').addEventListener('click', function() {
+    document.getElementById('load-list-input').click();
+});
+
+function loadListFromFileContent(fileContent) {
+    const itemList = document.getElementById('item-list');
+    itemList.innerHTML = '';
+
+    // Split the file content into lines and filter out lines starting with '!'
+    const lines = fileContent.split('\n').filter(line => !line.startsWith('!'));
+
+    lines.forEach(line => {
+        if (line.startsWith('{ITEM=') && line.endsWith('};')) {
+            const itemInfo = line.match(/\{ITEM=\((.*?)\)\s\|\sCOUNT=\((.*?)\)\};/);
+            if (itemInfo && itemInfo.length === 3) {
+                const itemName = itemInfo[1];
+                const itemCount = itemInfo[2];
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('item');
+                itemDiv.innerHTML = `
+                    <span class="item-name">${itemName}</span>
+                    <span class="item-amount">(x${itemCount})</span>
+                    <button class="remove-btn">Remove</button>
+                `;
+                itemList.appendChild(itemDiv);
+
+                const removeBtn = itemDiv.querySelector('.remove-btn');
+                removeBtn.addEventListener('click', function () {
+                    itemDiv.remove();
+                    removeItemFromLocalStorage(itemName);
+                });
+
+                saveItemToLocalStorage(itemName, itemCount);
+            }
+        }
+    });
+}
